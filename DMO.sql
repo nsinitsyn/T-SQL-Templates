@@ -48,6 +48,23 @@ SELECT DB.name AS database_name, O.name AS object_name, D.*, C.* FROM sys.dm_db_
 	INNER JOIN sys.databases AS DB
 		ON D.database_id = DB.database_id
 	OUTER APPLY sys.dm_db_missing_index_columns(D.index_handle) AS C;
+-- ИЛИ
+SELECT MID.statement AS [Database.Schema.Table],
+	MIC.column_id AS ColumnId,
+	MIC.column_name AS ColumnName,
+	MIC.column_usage AS ColumnUsage,
+	MIGS.user_seeks AS UserSeeks,
+	MIGS.user_scans AS UserScans,
+	MIGS.last_user_seek AS LastUserSeek,
+	MIGS.avg_total_user_cost AS AvgQueryCostReduction,
+	MIGS.avg_user_impact AS AvgPctBenefit
+FROM sys.dm_db_missing_index_details AS MID
+	CROSS APPLY sys.dm_db_missing_index_columns (MID.index_handle) AS MIC
+	INNER JOIN sys.dm_db_missing_index_groups AS MIG
+		ON MIG.index_handle = MID.index_handle
+	INNER JOIN sys.dm_db_missing_index_group_stats AS MIGS
+		ON MIG.index_group_handle=MIGS.group_handle
+ORDER BY MIGS.avg_user_impact DESC;
 
 
 -- Также об индекса
